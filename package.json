@@ -4,10 +4,10 @@
   "description": "AI Career Guidance & Learning Roadmap Platform",
   "main": "server.js",
   "scripts": {
-    "start": "concurrently \"npm run server\" \"npm run client\"",
+    "start": "node backend/server.js",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "nodemon backend/server.js",
     "client": "npm start --prefix frontend",
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
     "build": "cd frontend && npm install && npm run build",
     "heroku-postbuild": "npm install && npm install --prefix frontend && npm run build --prefix frontend",
     "vercel-build": "cd frontend && npm install && npm run build",
