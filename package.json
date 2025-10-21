@@ -10,7 +10,8 @@
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "build": "cd frontend && npm install && npm run build",
     "heroku-postbuild": "npm install && npm install --prefix frontend && npm run build --prefix frontend",
-    "vercel-build": "cd frontend && npm install && npm run build"
+    "vercel-build": "cd frontend && npm install && npm run build",
+    "railway-start": "node backend/server.js"
   },
   "keywords": [
     "career",
