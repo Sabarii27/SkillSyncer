@@ -22,6 +22,19 @@ connectDB();
 
 const app = express();
 
+// Global error handler
+process.on('unhandledRejection', (err, promise) => {
+  console.log(`Unhandled Rejection: ${err.message}`);
+  console.log('Shutting down server due to unhandled promise rejection');
+  process.exit(1);
+});
+
+process.on('uncaughtException', (err) => {
+  console.log(`Uncaught Exception: ${err.message}`);
+  console.log('Shutting down server due to uncaught exception');
+  process.exit(1);
+});
+
 // Body parser
 app.use(express.json());
 
@@ -59,4 +72,13 @@ app.use('/api/interview', require('./routes/interview'));
 
 const PORT = process.env.PORT || 5001;
 
-app.listen(PORT, console.log(`Server running on port ${PORT}`));
+const server = app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
+  console.log(`🔗 MongoDB URI exists: ${!!process.env.MONGO_URI}`);
+});
+
+// Handle server errors
+server.on('error', (err) => {
+  console.error('Server error:', err);
+});
