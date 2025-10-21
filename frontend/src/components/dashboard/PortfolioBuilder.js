@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import {
   PlusIcon,
@@ -28,6 +28,13 @@ const PortfolioBuilder = () => {
   const [selectedTheme, setSelectedTheme] = useState('modern');
   const [activeSection, setActiveSection] = useState('personal');
   const previewRef = useRef(null);
+
+  // Ensure portfolio is always initialized
+  useEffect(() => {
+    if (portfolio === null) {
+      setPortfolio(createDefaultPortfolio());
+    }
+  }, [portfolio]);
 
   const themes = {
     modern: {
@@ -110,21 +117,27 @@ const PortfolioBuilder = () => {
 
   const exportPDF = async () => {
     try {
-      const response = await axios.post('/api/portfolio/export', portfolio, {
-        responseType: 'blob'
-      });
+      // For now, let's use a client-side PDF generation approach
+      // since the backend PDF export might not be working
+      const printContent = previewRef.current;
+      if (!printContent) {
+        alert('Please show the preview first before exporting');
+        return;
+      }
+
+      // Open print dialog for now (user can save as PDF)
+      const originalContent = document.body.innerHTML;
+      const printableContent = printContent.innerHTML;
       
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${portfolio.personalInfo.fullName || 'portfolio'}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      document.body.innerHTML = printableContent;
+      window.print();
+      document.body.innerHTML = originalContent;
+      
+      // Reload the page to restore React state
+      window.location.reload();
     } catch (error) {
       console.error('Failed to export PDF:', error);
+      alert('PDF export failed. Please try again.');
     }
   };
 
@@ -144,14 +157,14 @@ const PortfolioBuilder = () => {
     }));
   };
 
-  const updateExperience = (id, field, value) => {
+  const updateExperience = useCallback((id, field, value) => {
     setPortfolio(prev => ({
       ...prev,
       experience: (prev?.experience || []).map(exp => 
         exp.id === id ? { ...exp, [field]: value } : exp
       )
     }));
-  };
+  }, []);
 
   const removeExperience = (id) => {
     setPortfolio(prev => ({
@@ -176,14 +189,14 @@ const PortfolioBuilder = () => {
     }));
   };
 
-  const updateProject = (id, field, value) => {
+  const updateProject = useCallback((id, field, value) => {
     setPortfolio(prev => ({
       ...prev,
       projects: (prev?.projects || []).map(project => 
         project.id === id ? { ...project, [field]: value } : project
       )
     }));
-  };
+  }, []);
 
   const removeProject = (id) => {
     setPortfolio(prev => ({
@@ -205,14 +218,14 @@ const PortfolioBuilder = () => {
     }));
   };
 
-  const updateSkill = (id, field, value) => {
+  const updateSkill = useCallback((id, field, value) => {
     setPortfolio(prev => ({
       ...prev,
       skills: (prev?.skills || []).map(skill => 
         skill.id === id ? { ...skill, [field]: value } : skill
       )
     }));
-  };
+  }, []);
 
   const removeSkill = (id) => {
     setPortfolio(prev => ({
@@ -221,109 +234,114 @@ const PortfolioBuilder = () => {
     }));
   };
 
-  const PersonalInfoEditor = () => (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-          <input
-            type="text"
-            value={portfolio?.personalInfo?.fullName || ''}
-            onChange={(e) => setPortfolio(prev => ({
-              ...prev,
-              personalInfo: { ...prev?.personalInfo, fullName: e.target.value }
-            }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            placeholder="John Doe"
-          />
+  // Memoized handlers to prevent re-renders
+  const handlePersonalInfoChange = useCallback((field, value) => {
+    setPortfolio(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        personalInfo: { 
+          ...(prev.personalInfo || {}), 
+          [field]: value 
+        }
+      };
+    });
+  }, []);
+
+  // Memoized component to prevent unnecessary re-renders
+  const PersonalInfoEditor = useCallback(() => {
+    if (!portfolio) return null;
+
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+            <input
+              key="fullName"
+              type="text"
+              value={portfolio.personalInfo?.fullName || ''}
+              onChange={(e) => handlePersonalInfoChange('fullName', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              placeholder="John Doe"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Professional Title</label>
+            <input
+              key="title"
+              type="text"
+              value={portfolio.personalInfo?.title || ''}
+              onChange={(e) => handlePersonalInfoChange('title', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              placeholder="Full Stack Developer"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+            <input
+              key="email"
+              type="email"
+              value={portfolio.personalInfo?.email || ''}
+              onChange={(e) => handlePersonalInfoChange('email', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              placeholder="john@example.com"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+            <input
+              key="phone"
+              type="tel"
+              value={portfolio.personalInfo?.phone || ''}
+              onChange={(e) => handlePersonalInfoChange('phone', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              placeholder="+1 (555) 123-4567"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+            <input
+              key="location"
+              type="text"
+              value={portfolio.personalInfo?.location || ''}
+              onChange={(e) => handlePersonalInfoChange('location', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              placeholder="New York, NY"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Website</label>
+            <input
+              key="website"
+              type="url"
+              value={portfolio.personalInfo?.website || ''}
+              onChange={(e) => handlePersonalInfoChange('website', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              placeholder="https://johndoe.dev"
+            />
+          </div>
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Professional Title</label>
-          <input
-            type="text"
-            value={portfolio?.personalInfo?.title || ''}
-            onChange={(e) => setPortfolio(prev => ({
-              ...prev,
-              personalInfo: { ...prev?.personalInfo, title: e.target.value }
-            }))}
+          <label className="block text-sm font-medium text-gray-700 mb-2">Professional Summary</label>
+          <textarea
+            key="summary"
+            value={portfolio.personalInfo?.summary || ''}
+            onChange={(e) => handlePersonalInfoChange('summary', e.target.value)}
+            rows={4}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            placeholder="Full Stack Developer"
-          />
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-          <input
-            type="email"
-            value={portfolio?.personalInfo?.email || ''}
-            onChange={(e) => setPortfolio(prev => ({
-              ...prev,
-              personalInfo: { ...prev?.personalInfo, email: e.target.value }
-            }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            placeholder="john@example.com"
-          />
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-          <input
-            type="tel"
-            value={portfolio?.personalInfo?.phone || ''}
-            onChange={(e) => setPortfolio(prev => ({
-              ...prev,
-              personalInfo: { ...prev?.personalInfo, phone: e.target.value }
-            }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            placeholder="+1 (555) 123-4567"
-          />
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
-          <input
-            type="text"
-            value={portfolio?.personalInfo?.location || ''}
-            onChange={(e) => setPortfolio(prev => ({
-              ...prev,
-              personalInfo: { ...prev?.personalInfo, location: e.target.value }
-            }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            placeholder="New York, NY"
-          />
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Website</label>
-          <input
-            type="url"
-            value={portfolio?.personalInfo?.website || ''}
-            onChange={(e) => setPortfolio(prev => ({
-              ...prev,
-              personalInfo: { ...prev?.personalInfo, website: e.target.value }
-            }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            placeholder="https://johndoe.dev"
+            placeholder="Brief description of your background and expertise..."
           />
         </div>
       </div>
-      
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Professional Summary</label>
-        <textarea
-          value={portfolio?.personalInfo?.summary || ''}
-          onChange={(e) => setPortfolio(prev => ({
-            ...prev,
-            personalInfo: { ...prev?.personalInfo, summary: e.target.value }
-          }))}
-          rows={4}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          placeholder="Brief description of your background and expertise..."
-        />
-      </div>
-    </div>
-  );
+    );
+  }, [portfolio, handlePersonalInfoChange]);
 
   const ExperienceEditor = () => (
     <div className="space-y-6">
@@ -339,7 +357,7 @@ const PortfolioBuilder = () => {
       </div>
       
       {(portfolio?.experience || []).map((exp, index) => (
-        <div key={exp.id} className="bg-gray-50 p-6 rounded-lg space-y-4">
+        <div key={`exp-${exp.id}-${index}`} className="bg-gray-50 p-6 rounded-lg space-y-4">
           <div className="flex justify-between items-start">
             <h4 className="text-md font-medium text-gray-900">Experience #{index + 1}</h4>
             <button
@@ -353,28 +371,28 @@ const PortfolioBuilder = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input
               type="text"
-              value={exp.company}
+              value={exp.company || ''}
               onChange={(e) => updateExperience(exp.id, 'company', e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
               placeholder="Company Name"
             />
             <input
               type="text"
-              value={exp.position}
+              value={exp.position || ''}
               onChange={(e) => updateExperience(exp.id, 'position', e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
               placeholder="Position Title"
             />
             <input
               type="text"
-              value={exp.duration}
+              value={exp.duration || ''}
               onChange={(e) => updateExperience(exp.id, 'duration', e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
               placeholder="Jan 2020 - Present"
             />
             <input
               type="text"
-              value={exp.location}
+              value={exp.location || ''}
               onChange={(e) => updateExperience(exp.id, 'location', e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
               placeholder="Location"
@@ -382,7 +400,7 @@ const PortfolioBuilder = () => {
           </div>
           
           <textarea
-            value={exp.description}
+            value={exp.description || ''}
             onChange={(e) => updateExperience(exp.id, 'description', e.target.value)}
             rows={3}
             className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
@@ -407,7 +425,7 @@ const PortfolioBuilder = () => {
       </div>
       
       {(portfolio?.projects || []).map((project, index) => (
-        <div key={project.id} className="bg-gray-50 p-6 rounded-lg space-y-4">
+        <div key={`project-${project.id}-${index}`} className="bg-gray-50 p-6 rounded-lg space-y-4">
           <div className="flex justify-between items-start">
             <h4 className="text-md font-medium text-gray-900">Project #{index + 1}</h4>
             <button
@@ -421,14 +439,14 @@ const PortfolioBuilder = () => {
           <div className="space-y-4">
             <input
               type="text"
-              value={project.name}
+              value={project.name || ''}
               onChange={(e) => updateProject(project.id, 'name', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
               placeholder="Project Name"
             />
             
             <textarea
-              value={project.description}
+              value={project.description || ''}
               onChange={(e) => updateProject(project.id, 'description', e.target.value)}
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
@@ -438,14 +456,14 @@ const PortfolioBuilder = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <input
                 type="url"
-                value={project.liveUrl}
+                value={project.liveUrl || ''}
                 onChange={(e) => updateProject(project.id, 'liveUrl', e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
                 placeholder="Live URL"
               />
               <input
                 type="url"
-                value={project.githubUrl}
+                value={project.githubUrl || ''}
                 onChange={(e) => updateProject(project.id, 'githubUrl', e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
                 placeholder="GitHub URL"
@@ -479,23 +497,23 @@ const PortfolioBuilder = () => {
             <div className="space-y-3">
               {(portfolio?.skills || [])
                 .filter(skill => skill.category === category)
-                .map(skill => (
-                  <div key={skill.id} className="flex items-center space-x-4 bg-gray-50 p-3 rounded-lg">
+                .map((skill, skillIndex) => (
+                  <div key={`skill-${skill.id}-${skillIndex}`} className="flex items-center space-x-4 bg-gray-50 p-3 rounded-lg">
                     <input
                       type="text"
-                      value={skill.name}
+                      value={skill.name || ''}
                       onChange={(e) => updateSkill(skill.id, 'name', e.target.value)}
                       className="flex-1 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
                       placeholder="Skill name"
                     />
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-600 w-8">{skill.level}%</span>
+                      <span className="text-sm text-gray-600 w-8">{skill.level || 0}%</span>
                       <input
                         type="range"
                         min="0"
                         max="100"
-                        value={skill.level}
-                        onChange={(e) => updateSkill(skill.id, 'level', e.target.value)}
+                        value={skill.level || 0}
+                        onChange={(e) => updateSkill(skill.id, 'level', parseInt(e.target.value))}
                         className="w-24"
                       />
                     </div>
@@ -766,7 +784,7 @@ const PortfolioBuilder = () => {
 
           {/* Section Content */}
           <div className="bg-white rounded-lg p-6">
-            {activeSection === 'personal' && portfolio && <PersonalInfoEditor />}
+            {activeSection === 'personal' && portfolio && PersonalInfoEditor()}
             {activeSection === 'experience' && portfolio && <ExperienceEditor />}
             {activeSection === 'projects' && portfolio && <ProjectsEditor />}
             {activeSection === 'skills' && portfolio && <SkillsEditor />}
