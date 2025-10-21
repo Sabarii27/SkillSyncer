@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import API_BASE_URL from '../config/api';
 import SkillAssessment from '../components/dashboard/SkillAssessment';
 import CareerSuggestions from '../components/dashboard/CareerSuggestions';
 import LearningRoadmap from '../components/dashboard/LearningRoadmap';
