@@ -27,9 +27,19 @@ const PrivateRoute = ({ children }) => {
         setIsAuthenticated(true);
       } catch (err) {
         console.error('PrivateRoute - auth failed:', err);
-        // Clear token and set authenticated to false
-        localStorage.removeItem('token');
-        delete axios.defaults.headers.common['Authorization'];
+        
+        // If it's a 405 or network error (backend not available), allow access in demo mode
+        if (err.code === 'ERR_NETWORK' || err.response?.status === 405) {
+          console.log('Backend not available - using demo mode');
+          setIsAuthenticated(true);
+          return;
+        }
+        
+        // Only clear token on real auth errors (401, 403)
+        if (err.response?.status === 401 || err.response?.status === 403) {
+          localStorage.removeItem('token');
+          delete axios.defaults.headers.common['Authorization'];
+        }
         setIsAuthenticated(false);
       }
     };

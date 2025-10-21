@@ -32,7 +32,21 @@ const Dashboard = () => {
       setLoading(false);
     } catch (err) {
       console.error('Error fetching user:', err);
+      
+      // Use mock user data when backend is not available (like on Vercel frontend-only deployment)
+      const mockUser = {
+        _id: '1',
+        name: 'Demo User',
+        email: 'demo@skillsync.com',
+        skills: ['JavaScript', 'React', 'Node.js'],
+        careerGoal: 'Full Stack Developer',
+        joinedAt: new Date('2024-01-01')
+      };
+      
+      setUser(mockUser);
       setLoading(false);
+      
+      // Only redirect to login if it's a real 401 error, not a network/405 error
       if (err.response?.status === 401) {
         localStorage.removeItem('token');
         navigate('/login');
