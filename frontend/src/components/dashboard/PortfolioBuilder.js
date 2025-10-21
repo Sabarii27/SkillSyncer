@@ -140,14 +140,14 @@ const PortfolioBuilder = () => {
     };
     setPortfolio(prev => ({
       ...prev,
-      experience: [...prev.experience, newExperience]
+      experience: [...(prev?.experience || []), newExperience]
     }));
   };
 
   const updateExperience = (id, field, value) => {
     setPortfolio(prev => ({
       ...prev,
-      experience: prev.experience.map(exp => 
+      experience: (prev?.experience || []).map(exp => 
         exp.id === id ? { ...exp, [field]: value } : exp
       )
     }));
@@ -156,7 +156,7 @@ const PortfolioBuilder = () => {
   const removeExperience = (id) => {
     setPortfolio(prev => ({
       ...prev,
-      experience: prev.experience.filter(exp => exp.id !== id)
+      experience: (prev?.experience || []).filter(exp => exp.id !== id)
     }));
   };
 
@@ -172,14 +172,14 @@ const PortfolioBuilder = () => {
     };
     setPortfolio(prev => ({
       ...prev,
-      projects: [...prev.projects, newProject]
+      projects: [...(prev?.projects || []), newProject]
     }));
   };
 
   const updateProject = (id, field, value) => {
     setPortfolio(prev => ({
       ...prev,
-      projects: prev.projects.map(project => 
+      projects: (prev?.projects || []).map(project => 
         project.id === id ? { ...project, [field]: value } : project
       )
     }));
@@ -188,7 +188,7 @@ const PortfolioBuilder = () => {
   const removeProject = (id) => {
     setPortfolio(prev => ({
       ...prev,
-      projects: prev.projects.filter(project => project.id !== id)
+      projects: (prev?.projects || []).filter(project => project.id !== id)
     }));
   };
 
@@ -201,14 +201,14 @@ const PortfolioBuilder = () => {
     };
     setPortfolio(prev => ({
       ...prev,
-      skills: [...prev.skills, newSkill]
+      skills: [...(prev?.skills || []), newSkill]
     }));
   };
 
   const updateSkill = (id, field, value) => {
     setPortfolio(prev => ({
       ...prev,
-      skills: prev.skills.map(skill => 
+      skills: (prev?.skills || []).map(skill => 
         skill.id === id ? { ...skill, [field]: value } : skill
       )
     }));
@@ -217,7 +217,7 @@ const PortfolioBuilder = () => {
   const removeSkill = (id) => {
     setPortfolio(prev => ({
       ...prev,
-      skills: prev.skills.filter(skill => skill.id !== id)
+      skills: (prev?.skills || []).filter(skill => skill.id !== id)
     }));
   };
 
@@ -338,7 +338,7 @@ const PortfolioBuilder = () => {
         </button>
       </div>
       
-      {portfolio.experience.map((exp, index) => (
+      {(portfolio?.experience || []).map((exp, index) => (
         <div key={exp.id} className="bg-gray-50 p-6 rounded-lg space-y-4">
           <div className="flex justify-between items-start">
             <h4 className="text-md font-medium text-gray-900">Experience #{index + 1}</h4>
@@ -406,7 +406,7 @@ const PortfolioBuilder = () => {
         </button>
       </div>
       
-      {portfolio.projects.map((project, index) => (
+      {(portfolio?.projects || []).map((project, index) => (
         <div key={project.id} className="bg-gray-50 p-6 rounded-lg space-y-4">
           <div className="flex justify-between items-start">
             <h4 className="text-md font-medium text-gray-900">Project #{index + 1}</h4>
@@ -477,7 +477,7 @@ const PortfolioBuilder = () => {
             </div>
             
             <div className="space-y-3">
-              {portfolio.skills
+              {(portfolio?.skills || [])
                 .filter(skill => skill.category === category)
                 .map(skill => (
                   <div key={skill.id} className="flex items-center space-x-4 bg-gray-50 p-3 rounded-lg">
@@ -517,31 +517,41 @@ const PortfolioBuilder = () => {
   const PortfolioPreview = () => {
     const theme = themes[selectedTheme];
     
+    // Add safety checks
+    if (!portfolio) {
+      return <div className="flex items-center justify-center h-64">Loading preview...</div>;
+    }
+    
+    const personalInfo = portfolio.personalInfo || {};
+    const experience = portfolio.experience || [];
+    const projects = portfolio.projects || [];
+    const skills = portfolio.skills || [];
+    
     return (
       <div ref={previewRef} className="bg-white min-h-screen" style={{ fontFamily: 'Arial, sans-serif' }}>
         {/* Header */}
         <div style={{ backgroundColor: theme.primary, color: 'white', padding: '40px' }}>
           <div className="text-center">
-            <h1 className="text-4xl font-bold mb-2">{portfolio.personalInfo.fullName || 'Your Name'}</h1>
-            <p className="text-xl opacity-90">{portfolio.personalInfo.title || 'Professional Title'}</p>
+            <h1 className="text-4xl font-bold mb-2">{personalInfo.fullName || 'Your Name'}</h1>
+            <p className="text-xl opacity-90">{personalInfo.title || 'Professional Title'}</p>
             
             <div className="flex justify-center space-x-6 mt-6 text-sm">
-              {portfolio.personalInfo.email && (
+              {personalInfo.email && (
                 <div className="flex items-center">
                   <EnvelopeIcon className="h-4 w-4 mr-2" />
-                  {portfolio.personalInfo.email}
+                  {personalInfo.email}
                 </div>
               )}
-              {portfolio.personalInfo.phone && (
+              {personalInfo.phone && (
                 <div className="flex items-center">
                   <PhoneIcon className="h-4 w-4 mr-2" />
-                  {portfolio.personalInfo.phone}
+                  {personalInfo.phone}
                 </div>
               )}
-              {portfolio.personalInfo.location && (
+              {personalInfo.location && (
                 <div className="flex items-center">
                   <MapPinIcon className="h-4 w-4 mr-2" />
-                  {portfolio.personalInfo.location}
+                  {personalInfo.location}
                 </div>
               )}
             </div>
@@ -551,28 +561,28 @@ const PortfolioBuilder = () => {
         {/* Content */}
         <div className="p-8 max-w-4xl mx-auto">
           {/* Summary */}
-          {portfolio.personalInfo.summary && (
+          {personalInfo.summary && (
             <section className="mb-8">
               <h2 className="text-2xl font-bold mb-4" style={{ color: theme.primary }}>
                 Professional Summary
               </h2>
-              <p className="text-gray-700 leading-relaxed">{portfolio.personalInfo.summary}</p>
+              <p className="text-gray-700 leading-relaxed">{personalInfo.summary}</p>
             </section>
           )}
 
           {/* Experience */}
-          {portfolio.experience.length > 0 && (
+          {experience.length > 0 && (
             <section className="mb-8">
               <h2 className="text-2xl font-bold mb-4" style={{ color: theme.primary }}>
                 Work Experience
               </h2>
               <div className="space-y-6">
-                {portfolio.experience.map(exp => (
+                {experience.map(exp => (
                   <div key={exp.id} className="border-l-4 pl-4" style={{ borderColor: theme.secondary }}>
-                    <h3 className="text-xl font-semibold">{exp.position}</h3>
-                    <p className="text-lg" style={{ color: theme.secondary }}>{exp.company}</p>
-                    <p className="text-gray-600 mb-2">{exp.duration} • {exp.location}</p>
-                    <p className="text-gray-700">{exp.description}</p>
+                    <h3 className="text-xl font-semibold">{exp.position || 'Position'}</h3>
+                    <p className="text-lg" style={{ color: theme.secondary }}>{exp.company || 'Company'}</p>
+                    <p className="text-gray-600 mb-2">{exp.duration || 'Duration'} • {exp.location || 'Location'}</p>
+                    <p className="text-gray-700">{exp.description || 'Job description'}</p>
                   </div>
                 ))}
               </div>
@@ -580,16 +590,16 @@ const PortfolioBuilder = () => {
           )}
 
           {/* Projects */}
-          {portfolio.projects.length > 0 && (
+          {projects.length > 0 && (
             <section className="mb-8">
               <h2 className="text-2xl font-bold mb-4" style={{ color: theme.primary }}>
                 Projects
               </h2>
               <div className="grid gap-6">
-                {portfolio.projects.map(project => (
+                {projects.map(project => (
                   <div key={project.id} className="border rounded-lg p-4" style={{ borderColor: theme.accent }}>
-                    <h3 className="text-xl font-semibold mb-2">{project.name}</h3>
-                    <p className="text-gray-700 mb-3">{project.description}</p>
+                    <h3 className="text-xl font-semibold mb-2">{project.name || 'Project Name'}</h3>
+                    <p className="text-gray-700 mb-3">{project.description || 'Project description'}</p>
                     <div className="flex space-x-4">
                       {project.liveUrl && (
                         <a href={project.liveUrl} className="text-blue-600 hover:underline">
@@ -609,14 +619,14 @@ const PortfolioBuilder = () => {
           )}
 
           {/* Skills */}
-          {portfolio.skills.length > 0 && (
+          {skills.length > 0 && (
             <section className="mb-8">
               <h2 className="text-2xl font-bold mb-4" style={{ color: theme.primary }}>
                 Skills
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {['Technical', 'Languages', 'Frameworks', 'Tools', 'Soft Skills'].map(category => {
-                  const categorySkills = portfolio.skills.filter(skill => skill.category === category);
+                  const categorySkills = skills.filter(skill => skill.category === category);
                   if (categorySkills.length === 0) return null;
                   
                   return (
@@ -628,14 +638,14 @@ const PortfolioBuilder = () => {
                         {categorySkills.map(skill => (
                           <div key={skill.id}>
                             <div className="flex justify-between mb-1">
-                              <span className="text-sm font-medium">{skill.name}</span>
-                              <span className="text-sm text-gray-600">{skill.level}%</span>
+                              <span className="text-sm font-medium">{skill.name || 'Skill'}</span>
+                              <span className="text-sm text-gray-600">{skill.level || 0}%</span>
                             </div>
                             <div className="w-full bg-gray-200 rounded-full h-2">
                               <div
                                 className="h-2 rounded-full"
                                 style={{ 
-                                  width: `${skill.level}%`,
+                                  width: `${skill.level || 0}%`,
                                   backgroundColor: theme.primary
                                 }}
                               ></div>
