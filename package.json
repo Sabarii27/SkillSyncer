@@ -1,0 +1,30 @@
+{
+  "name": "skillsync",
+  "version": "1.0.0",
+  "description": "AI Career Guidance & Learning Roadmap Platform",
+  "main": "server.js",
+  "scripts": {
+    "start": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "nodemon backend/server.js",
+    "client": "npm start --prefix frontend",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "build": "npm run build --prefix frontend",
+    "heroku-postbuild": "npm install && npm install --prefix frontend && npm run build --prefix frontend"
+  },
+  "keywords": [
+    "career",
+    "guidance",
+    "ai",
+    "roadmap",
+    "mern"
+  ],
+  "author": "SkillSync Team",
+  "license": "MIT",
+  "dependencies": {
+    "concurrently": "^7.6.0",
+    "dotenv": "^16.0.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
