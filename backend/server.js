@@ -28,7 +28,26 @@ app.use(express.json());
 // Enable cors
 app.use(cors());
 
-// Routes
+// Root route for health check
+app.get('/', (req, res) => {
+  res.json({
+    message: 'SkillSync API is running! 🚀',
+    version: '1.0.0',
+    endpoints: {
+      auth: '/api/auth',
+      users: '/api/users',
+      roadmap: '/api/roadmap',
+      progress: '/api/progress',
+      chat: '/api/chat',
+      community: '/api/community',
+      portfolio: '/api/portfolio',
+      interview: '/api/interview'
+    },
+    status: 'healthy'
+  });
+});
+
+// API Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/roadmap', require('./routes/roadmap'));
