@@ -19,8 +19,7 @@
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.9.4",
     "openai": "^4.8.0",
-    "pdfkit": "^0.13.0",
-    "skillsync": "file:.."
+    "pdfkit": "^0.13.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
